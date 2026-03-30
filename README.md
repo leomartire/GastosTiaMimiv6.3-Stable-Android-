@@ -1,6 +1,9 @@
 # 💝 Tia Mimi - Expense Management System
 
-A custom ERP-style web application developed for family expense tracking, specialized in Oracle-inspired financial logic and cloud integration.
+A simple custom web application developed for family expense tracking.
+Easy to use for non Tech people. 
+Financial logic and cloud integration.
+This initial version is only applicable for mobiles based on Android.
 
 ## 📂 Repository Structure
 
