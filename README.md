@@ -8,8 +8,8 @@ MASTER BACKUP: Gastos Tía Mimi v6.3 (Stable Android)
 
 En esta seccion se guarda el código que se registra dentro de Google Drive. Se crea una planilla de Google Spreadsheet con las columnas requeridas para guardar los datos que se crean, y luego se carga el codigo en la funcion "Apps Script". Alli se guarda el siguiente codigo de javaScript.
 
-*** JavaScript**
-/** * VERSION 6.3 STABLE BACKUP
+*** JavaScript***
+/** VERSION 6.3 STABLE BACKUP
 * Optimized for Android / mode: 'no-cors' */
 
 const SPREADSHEET_ID = '1XB2cMUMHvO4M4PF2cUnJhy1c6wTXdu2CmPKi3aFlvDk';
@@ -56,11 +56,12 @@ function doPost(e) {
   }
 }
 
-##
-##
+##################################################
+##################################################
+
 2. **Frontend: HTML File**
-*Filename: gastos_tia_mimi_app_v6.3_PROD.html
-En esta seccion se guarda el código HTML en el que se registra el frontend. Es decir la aplicacion de carga que usa el usuario desde su mobil o computadora. 
+  * Filename: gastos_tia_mimi_app_v6.3_PROD.html
+  * En esta seccion se guarda el código HTML en el que se registra el frontend. Es decir la aplicacion de carga que usa el usuario desde su mobil o computadora. 
 
 #Codigo HTML
 
