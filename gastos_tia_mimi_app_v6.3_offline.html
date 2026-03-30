@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Gastos Tía Mimi v6.3</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root {
+            --primary: #FF6B6B; --primary-dark: #EE5A52; --secondary: #4ECDC4;
+            --accent: #FFE66D; --bg: #FFF8F3; --card-bg: #FFFFFF;
+            --text: #2D3748; --text-light: #718096; --border: #E2E8F0;
+            --success: #48BB78;
+        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding-bottom: 20px; }
+        .header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 1.2rem; position: sticky; top: 0; z-index: 100; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header h1 { font-family: 'Fraunces', serif; font-size: 1.5rem; }
+        .container { max-width: 500px; margin: 0 auto; padding: 1rem; }
+        .card { background: var(--card-bg); border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--text-light); }
+        input, select { width: 100%; padding: 0.8rem; border: 2px solid var(--border); border-radius: 12px; font-size: 16px; font-family: inherit; }
+        .btn { width: 100%; padding: 1rem; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; margin-top: 10px; }
+        .btn-help { background: #EDF2F7; color: var(--text-light); margin-top: 15px; font-size: 0.85rem; padding: 0.6rem; }
+        .tab-buttons { display: flex; gap: 8px; margin-bottom: 1rem; }
+        .tab-btn { flex: 1; padding: 0.8rem; border: 2px solid var(--border); background: white; border-radius: 15px; font-weight: 600; cursor: pointer; }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .expense-item { border-bottom: 1px solid var(--border); padding: 1rem 0; }
+        .expense-amount { font-size: 1.1rem; font-weight: 700; color: var(--primary); font-family: 'Fraunces', serif; }
+
+        /* Modal Estilo Guía */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
+        .modal-content { background: white; margin: 20% auto; padding: 25px; border-radius: 25px; width: 85%; max-width: 400px; position: relative; }
+        .close { position: absolute; right: 20px; top: 15px; font-size: 24px; font-weight: bold; color: gray; }
+        .guide-step { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+        .step-num { background: var(--primary); color: white; min-width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        /* Cartel de Confirmación (Toast) Mejorado */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: #2D3748; color: white; padding: 15px 30px; border-radius: 50px;
+            display: flex; align-items: center; gap: 10px; z-index: 2000; font-size: 0.95rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast-success { border-left: 5px solid var(--success); }
+    </style>
+</head>
+<body>
+    <div class="header"><h1>💝 Tía Mimi v6.3</h1></div>
+
+    <div class="container">
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="switchTab('nuevo', this)">➕ Nuevo</button>
+            <button class="tab-btn" onclick="switchTab('historial', this)">📋 Historial</button>
+        </div>
+
+        <div id="tab-nuevo" class="tab-content active">
+            <div class="card">
+                <form id="expenseForm">
+                    <div class="form-group"><label>📅 FECHA</label><input type="date" id="fecha" required></div>
+                    <div class="form-group"><label>👤 QUIÉN GASTÓ</label>
+                        <select id="persona" required>
+                            <option value="Marcela">Marcela</option><option value="Gabriela">Gabriela</option>
+                            <option value="Leo">Leo</option><option value="Paula">Paula</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>🏷️ CATEGORÍA</label>
+                        <select id="categoria" required>
+                            <option value="Limpieza">🧹 Limpieza</option><option value="Supermercado">🛒 Supermercado</option>
+                            <option value="Transporte">🚌 Transporte</option><option value="Impuestos y Servicios">💡 Impuestos y Servicios</option>
+                            <option value="Medicamentos">💊 Medicamentos</option><option value="Otros">📦 Otros (Detallar abajo)</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>💰 MONTO ($)</label><input type="number" id="monto" step="0.01" inputmode="decimal" required></div>
+                    <div class="form-group"><label>💬 COMENTARIOS</label><input type="text" id="comentario" placeholder="Ej: Pago de Luz"></div>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">💾 GUARDAR GASTO</button>
+                </form>
+
+                <button class="btn btn-help" onclick="showGuide()">📲 Cómo agregar a pantalla de inicio</button>
+            </div>
+        </div>
+
+        <div id="tab-historial" class="tab-content">
+            <div class="card" id="expense-list-container"></div>
+        </div>
+    </div>
+
+    <div id="guideModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="guideTitle" style="margin-bottom: 20px; font-family: 'Fraunces'; color: var(--primary);">Instalar App</h2>
+            <div id="guideSteps"></div>
+            <button class="btn btn-primary" onclick="closeModal()" style="margin-top: 10px;">¡Entendido!</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast toast-success"></div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYwsGQu43dDnLso9ps06X6kXrf_lxnJNkSfGfXYaEBuxKr5ctSL85RAsGvBOE2MEvg/exec';
+        document.getElementById('fecha').valueAsDate = new Date();
+
+        function showMessage(text) {
+            const toast = document.getElementById('toast');
+            toast.innerText = text;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 4000);
+        }
+
+        function showGuide() {
+            const steps = document.getElementById('guideSteps');
+            const title = document.getElementById('guideTitle');
+            const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+            if (isiOS) {
+                title.innerText = "Instalar en iPhone";
+                steps.innerHTML = `
+                    <div class="guide-step"><div class="step-num">1</div><p>Toca el botón de <strong>Compartir</strong> (flecha arriba) abajo.</p></div>
+                    <div class="guide-step"><div class="step-num">2</div><p>Busca <strong>"Agregar a inicio"</strong>.</p></div>
+                    <div class="guide-step"><div class="step-num">3</div><p>Toca <strong>"Agregar"</strong> arriba. ¡Listo!</p></div>
+                `;
+            } else {
+                title.innerText = "Instalar en Android";
+                steps.innerHTML = `
+                    <div class="guide-step"><div class="step-num">1</div><p>Toca los <strong>3 puntitos</strong> arriba a la derecha.</p></div>
+                    <div class="guide-step"><div class="step-num">2</div><p>Toca en <strong>"Instalar aplicación"</strong>.</p></div>
+                    <div class="guide-step"><div class="step-num">3</div><p>Confirma tocando <strong>"Instalar"</strong>.</p></div>
+                `;
+            }
+            document.getElementById('guideModal').style.display = 'block';
+        }
+
+        function closeModal() { document.getElementById('guideModal').style.display = 'none'; }
+
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            btn.classList.add('active');
+            if(tab === 'historial') loadExpenses();
+        }
+
+        async function loadExpenses() {
+            const container = document.getElementById('expense-list-container');
+            container.innerHTML = '<div style="text-align:center; padding: 20px;">Cargando...</div>';
+            try {
+                const resp = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
+                const data = await resp.json();
+                container.innerHTML = data.map(e => `
+                    <div class="expense-item">
+                        <div style="display:flex; justify-content:space-between">
+                            <span class="expense-amount">$ ${parseFloat(e.monto).toLocaleString('es-AR')}</span>
+                            <span style="font-size:0.75rem; color:gray">${new Date(e.fecha).toLocaleDateString('es-AR')}</span>
+                        </div>
+                        <div style="font-size:0.9rem"><strong>${e.persona}</strong>${e.comentario ? ': ' + e.comentario : ''}</div>
+                        <span style="background:#EDF2F7; padding:2px 8px; border-radius:6px; font-size:0.7rem;">${e.categoria}</span>
+                    </div>
+                `).join('');
+            } catch (err) { container.innerHTML = '<p>Error de conexión.</p>'; }
+        }
+
+        document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true; btn.textContent = 'Guardando...';
+
+            const payload = {
+                fecha: document.getElementById('fecha').value,
+                persona: document.getElementById('persona').value,
+                categoria: document.getElementById('categoria').value,
+                monto: document.getElementById('monto').value,
+                comentario: document.getElementById('comentario').value
+            };
+
+            try {
+                // El POST se envía a Google Sheets
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+
+                // Si llegamos aquí, mostramos el mensaje de éxito
+                showMessage('✅ ¡Gasto guardado con éxito!');
+
+                document.getElementById('expenseForm').reset();
+                document.getElementById('fecha').valueAsDate = new Date();
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            } catch (err) {
+                showMessage('❌ Error al guardar');
+            } finally {
+                btn.disabled = false; btn.textContent = '💾 GUARDAR GASTO';
+            }
+        });
+    </script>
+</body>
+</html>
