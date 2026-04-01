@@ -10,7 +10,6 @@
         :root { --primary: #FF6B6B; --success: #48BB78; --bg: #FFF8F3; --card-bg: #FFFFFF; --text: #2D3748; --border: #E2E8F0; }
         body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 20px; min-height: 100vh; }
         
-        /* Notificación Toast - Corregida */
         #toast-message { 
             display: none; 
             position: fixed; 
@@ -56,7 +55,6 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
         
-        /* Estilos del Historial */
         .expense-item { border-bottom: 1px solid #F1F5F9; padding: 1.2rem 0; }
         .expense-item:last-child { border-bottom: none; }
         .expense-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -121,7 +119,8 @@
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwETOiHUqm9lNDL_5WCS_jB8lRp356ard7xBjZ1Lzu1-2oEpzs8_ieOyvLzeBtBmsH/exec';
+        // REEMPLAZA ESTA URL CON TU URL DE DESPLIEGUE ACTUAL SI ES NECESARIO
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxpUeimqu67ju1SUe9cPOA0QVCs3B95_jNpe5iCeppllQWbU9a2i-MyGyFM2wrQbU50/exec';
 
         document.getElementById('fecha').valueAsDate = new Date();
 
@@ -145,7 +144,7 @@
                 const resp = await fetch(`${SCRIPT_URL}?action=get&t=${Date.now()}`);
                 const data = await resp.json();
                 
-                if (data.length === 0) {
+                if (!data || data.length === 0) {
                     container.innerHTML = '<p style="text-align:center; padding: 20px;">No hay gastos registrados.</p>';
                     return;
                 }
@@ -158,7 +157,7 @@
                         </div>
                         <div style="display:flex; align-items:center;">
                             <span class="category-tag">${e.categoria}</span> 
-                            <span class="date-small">${e.fecha}</span>
+                            <span class="date-small">${new Date(e.fecha).toLocaleDateString('es-AR')}</span>
                         </div>
                         ${e.comentario ? `<p class="comment-text">${e.comentario}</p>` : ''}
                     </div>
@@ -171,7 +170,8 @@
         document.getElementById('expenseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            btn.disabled = true; btn.textContent = 'Guardando...';
+            btn.disabled = true; 
+            btn.textContent = 'Guardando...';
 
             const payload = {
                 fecha: document.getElementById('fecha').value,
@@ -182,14 +182,21 @@
             };
 
             try {
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+                // Usamos no-cors para evitar problemas de redirección de Google
+                await fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify(payload) 
+                });
+                
                 showToast();
                 document.getElementById('expenseForm').reset();
                 document.getElementById('fecha').valueAsDate = new Date();
             } catch (err) {
-                alert('Error al guardar. Revisa tu conexión.');
+                alert('Error al guardar el gasto.');
             } finally {
-                btn.disabled = false; btn.textContent = '💾 GUARDAR GASTO';
+                btn.disabled = false; 
+                btn.textContent = '💾 GUARDAR GASTO';
             }
         });
     </script>
