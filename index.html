@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard v8.4.2</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #4A90E2; --success: #48BB78; --error: #F56565; --bg: #F8FAFC; --card: #FFFFFF; --text-muted: #718096; --border: #E2E8F0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: #2D3748; padding-bottom: 40px; }
+        .header { background: var(--primary); color: white; padding: 18px; text-align: center; font-weight: 700; }
+        .dev-banner { background: #FFCC00; color: black; font-size: 0.65rem; font-weight: 800; padding: 4px; text-align: center; text-transform: uppercase; }
+        .container { max-width: 500px; margin: 0 auto; padding: 15px; }
+        .tab-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-nav button { flex: 1; padding: 12px; border-radius: 14px; border: 1px solid var(--border); background: white; cursor: pointer; font-weight: 700; color: var(--text-muted); }
+        .tab-nav button.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .main-card { background: white; border-radius: 20px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid var(--border); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 12px; font-size: 16px; background: #F8FAFC; }
+        .btn-save { width: 100%; padding: 16px; background: var(--success); color: white; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .total-value { font-size: 2.4rem; font-weight: 700; color: #1A202C; margin: 8px 0; }
+        .section-title { font-size: 0.85rem; font-weight: 700; margin: 25px 0 10px; color: #4A5568; border-left: 4px solid var(--primary); padding-left: 10px; }
+        .mov-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #F1F5F9; }
+        .mov-meta { display: flex; flex-direction: column; }
+        .mov-title { font-weight: 700; font-size: 0.85rem; color: #1A202C; }
+        .mov-sub { font-size: 0.7rem; color: var(--text-muted); }
+        .mov-amt { font-weight: 700; color: #2D3748; font-size: 0.9rem; }
+        .row-item { margin-bottom: 12px; }
+        .row-info { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
+        .bar-container { background: #EDF2F7; height: 8px; border-radius: 4px; overflow: hidden; }
+        .bar-fill { background: var(--primary); height: 100%; transition: width 0.8s; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="dev-banner">v8.4.2 - MODO ESTABLE (AUTO-REINTENTO)</div>
+    <div class="header">📊 CONTROL DE GASTOS</div>
+
+    <div class="container">
+        <div class="tab-nav">
+            <button id="nav-add" onclick="showView('add')" class="active">➕ Cargar</button>
+            <button id="nav-dash" onclick="showView('dash')">📈 Reportes</button>
+        </div>
+
+        <div id="view-add">
+            <div class="main-card">
+                <form id="expenseForm">
+                    <div class="form-group"><label>📅 Fecha</label><input type="date" id="fecha" required></div>
+                    <div class="form-group"><label>👤 Persona</label>
+                        <select id="persona" required>
+                            <? personas.forEach(function(p){ ?><option value="<?=p?>"><?=p?></option><? }); ?>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>🏷️ Categoría</label>
+                        <select id="categoria" required>
+                            <? categorias.forEach(function(c){ ?><option value="<?=c?>"><?=c?></option><? }); ?>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>💰 Monto</label><input type="number" id="monto" step="0.01" required></div>
+                    <div class="form-group"><label>💬 Nota</label><textarea id="comentario" rows="2"></textarea></div>
+                    <button type="submit" id="btnSubmit" class="btn-save">💾 GUARDAR GASTO</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="view-dash" class="hidden">
+            <div class="main-card" style="text-align: center;">
+                <div style="font-size: 0.75rem; color: gray;">Total General</div>
+                <div class="total-value" id="val-total">$ 0</div>
+            </div>
+            <div id="dashboard-content"></div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwaLivr9TpX_UKHRzyG28X7dRzLVofrWaO7Fi8sSwEJstxsPVbD399Tcgtqzs2KoO4zbw/exec';
+        document.getElementById('fecha').valueAsDate = new Date();
+
+        function showView(view) {
+            document.getElementById('view-add').classList.toggle('hidden', view !== 'add');
+            document.getElementById('view-dash').classList.toggle('hidden', view !== 'dash');
+            document.getElementById('nav-add').classList.toggle('active', view === 'add');
+            document.getElementById('nav-dash').classList.toggle('active', view === 'dash');
+            if(view === 'dash') refreshData();
+        }
+
+        async function refreshData(retryCount = 0) {
+            const dash = document.getElementById('dashboard-content');
+            if(retryCount === 0) dash.innerHTML = '<p style="text-align:center; padding:20px; color:gray;">Cargando información...</p>';
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seg timeout
+
+                const resp = await fetch(`${SCRIPT_URL}?action=get&t=${Date.now()}`, { signal: controller.signal });
+                const data = await resp.json();
+                clearTimeout(timeoutId);
+
+                document.getElementById('val-total').textContent = `$ ${data.totalGeneral.toLocaleString('es-AR')}`;
+
+                let html = renderSection('👤 POR PERSONA', data.porPersona, data.totalGeneral);
+                html += renderSection('🏷️ POR CATEGORÍA', data.porCategoria, data.totalGeneral);
+
+                let movsHtml = data.movimientos.map(m => `
+                    <div class="mov-item">
+                        <div class="mov-meta">
+                            <span class="mov-title">${m.cat}</span>
+                            <span class="mov-sub">${m.fecha} · ${m.persona}${m.nota ? ' · '+m.nota : ''}</span>
+                        </div>
+                        <div class="mov-amt">$ ${m.monto.toLocaleString('es-AR')}</div>
+                    </div>`).join('');
+
+                dash.innerHTML = html + `<div class="section-title">📝 ÚLTIMOS MOVIMIENTOS</div><div class="main-card">${movsHtml || 'Sin datos'}</div>`;
+            } catch (e) {
+                if (retryCount < 2) {
+                    refreshData(retryCount + 1);
+                } else {
+                    dash.innerHTML = '<div class="main-card" style="color:red; text-align:center; font-size:0.8rem;">Error de conexión. Toca "Reportes" para reintentar.</div>';
+                }
+            }
+        }
+
+        function renderSection(title, array, totalGral) {
+            if(!array || array.length === 0) return '';
+            let items = array.map(item => {
+                const porcentaje = totalGral > 0 ? (item.monto / totalGral * 100).toFixed(0) : 0;
+                return `<div class="row-item"><div class="row-info"><span>${item.etiqueta}</span><span style="font-weight:700;">$ ${item.monto.toLocaleString('es-AR')}</span></div><div class="bar-container"><div class="bar-fill" style="width: ${porcentaje}%"></div></div></div>`;
+            }).join('');
+            return `<div class="section-title">${title}</div><div class="main-card">${items}</div>`;
+        }
+
+        document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true; btn.textContent = '⏳ GUARDANDO...';
+            const payload = {
+                fecha: document.getElementById('fecha').value,
+                persona: document.getElementById('persona').value,
+                categoria: document.getElementById('categoria').value,
+                monto: document.getElementById('monto').value,
+                comentario: document.getElementById('comentario').value
+            };
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+                btn.style.background = '#48BB78'; btn.textContent = '✅ GUARDADO';
+                setTimeout(() => {
+                    document.getElementById('expenseForm').reset();
+                    document.getElementById('fecha').valueAsDate = new Date();
+                    btn.disabled = false; btn.textContent = '💾 GUARDAR GASTO'; btn.style.background = '';
+                }, 1500);
+            } catch (err) { alert("Error al guardar"); btn.disabled = false; }
+        });
+    </script>
+</body>
+</html>
